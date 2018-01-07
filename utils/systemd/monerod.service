@@ -1,0 +1,18 @@
+[Unit]
+Description=Monero Full Node
+After=network.target
+
+[Service]
+User=edollar
+Group=edollar
+WorkingDirectory=~
+RuntimeDirectory=edollar
+
+Type=forking
+PIDFile=/run/edollar/edollard.pid
+
+ExecStart=/usr/bin/edollard --config-file /etc/edollard.conf \
+    --detach --pidfile /run/edollar/edollard.pid
+
+[Install]
+WantedBy=multi-user.target

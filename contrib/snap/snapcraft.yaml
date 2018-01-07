@@ -1,0 +1,75 @@
+name: edollar
+version: 0.10.2-1
+summary: "edollar: the secure, private, untraceable cryptocurrency https://edollar.cash"
+description: |
+    edollar is a private, secure, untraceable, decentralised digital currency.
+    You are your bank, you control your funds, and nobody can trace your transfers
+    unless you allow them to do so.
+grade: devel
+confinement: strict
+
+apps:
+    edollard:
+        daemon: forking
+        command: |
+          edollard-wrapper --detach --data-dir ${SNAP_COMMON} --config-file ${SNAP_USER_DATA}/etc/edollard.conf
+        plugs:
+            - network
+            - network-bind
+    edollar-wallet-rpc:
+        command: |
+          edollar-wallet-rpc --log-file ${SNAP_USER_DATA}
+        plugs:
+            - home
+            - network
+            - network-bind
+    edollar-wallet-cli:
+        command: |
+          edollar-wallet-cli --log-file ${SNAP_USER_DATA}
+        plugs:
+            - home
+            - network
+
+parts:
+    cmake-build:
+        plugin: cmake
+        configflags:
+            - -DBDB_STATIC=1
+            - -DUPNP_STATIC=1
+            - -DBoost_USE_STATIC_LIBS=1
+            - -DBoost_USE_STATIC_RUNTIME=1
+            - -DARCH=default
+        source: .
+        build-packages:
+            - gcc
+            - pkg-config
+            - libunbound-dev
+            - libevent-dev
+            - libboost-all-dev
+            - libdb-dev
+            - libunwind-dev
+            - libminiupnpc-dev
+            - libldns-dev
+            - libexpat1-dev
+            - bison
+            - doxygen
+            - graphviz
+        stage-packages:
+            - libminiupnpc10
+            - libunbound2
+            - libunwind8
+        prime:
+            - bin
+            - usr/lib/
+            - -usr/lib/gcc
+            - -usr/share
+
+    dist-files:
+        plugin: dump
+        source: .
+        organize:
+            contrib/snap/edollard.conf: etc/edollard.conf
+            contrib/snap/edollard-wrapper: bin/edollard-wrapper
+        prime:
+            - etc
+            - bin
