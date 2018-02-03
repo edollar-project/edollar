@@ -1,4 +1,5 @@
-/// @file
+// Copyright (c) 2017-2018, The EDollar Project
+// Copyright (c) 2014-2017, The Monero Project
 /// @author rfree (current maintainer in edollar.cc project)
 /// @brief This is the place to implement our handlers for protocol network actions, e.g. for ratelimit for download-requests
 

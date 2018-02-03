@@ -1,4 +1,4 @@
-// Copyright (c) 2017, Edollar Project (fork from Monero Project)
+// Copyright (c) 2016, The Monero Project
 // 
 // All rights reserved.
 // 
