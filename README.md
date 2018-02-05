@@ -1,6 +1,7 @@
 # Edollar
 
-Copyright (c) 2017 The Edollar Project (Fork from Monero)   
+Copyright (c) 2017-2018 The Edollar Project.<br>
+Copyright (c) 2014-2017 The Monero Project.<br>
 Portions Copyright (c) 2012-2013 The Cryptonote developers.
 
 ## Development resources

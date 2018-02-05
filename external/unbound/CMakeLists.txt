@@ -1,4 +1,5 @@
-# Copyright (c)  2017, edollar project (fork from Monero)
+# Copyright (c) 2017-2018, The Edollar project
+# Copyright (c) 2014-2017, The Monero Project
 #
 # All rights reserved.
 #
