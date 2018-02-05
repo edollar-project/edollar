@@ -1,11 +1,5 @@
 // Copyright (c) 2017-2018, The EDollar Project
 // Copyright (c) 2014-2017, The Monero Project
-@file
-@details
-
-@image html images/other/runtime-commands.png
-
-*/
 
 // Copyright (c) 2017, edollar project (fork from Monero) 
 // 
