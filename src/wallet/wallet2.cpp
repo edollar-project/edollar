@@ -1142,9 +1142,14 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       payment.m_subaddr_index = i.first;
       if (pool)
       {
+        m_unconfirmed_payments.emplace(txid, payment);
         if (0 != m_callback)
           m_callback->on_unconfirmed_money_received(height, txid, tx, payment.m_amount, payment.m_subaddr_index);
       }
+      else
+      {
+        m_payments.emplace(txid, payment);
+      }  
       LOG_PRINT_L2("Payment found in " << (pool ? "pool" : "block") << ": "  <<  payment.m_tx_hash << " / " << payment.m_amount);
     }
   }
