@@ -1625,6 +1625,32 @@ namespace tools
     m_wallet = wal.release();
     return true;
   }
+
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_verify_address(const wallet_rpc::COMMAND_RPC_VERIFY_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_VERIFY_ADDRESS::response& res, epee::json_rpc::error& er)
+  {
+    //LOG_PRINT_L0("Verify address, address = "<<req.address);
+    cryptonote::address_parse_info info;
+    if(!get_account_address_from_str_or_url(info, m_wallet->testnet(), req.address,
+      [&er](const std::string &url, const std::vector<std::string> &addresses, bool dnssec_valid)->std::string {
+        if (!dnssec_valid)
+        {
+          return {};
+        }
+        if (addresses.empty())
+        {
+          return {};
+        }
+        return addresses[0];
+      }))
+    {
+      res.valid = false;
+      return true;
+    }
+    res.valid = true;
+    return true;
+  } 
+
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::handle_rpc_exception(const std::exception_ptr& e, epee::json_rpc::error& er, int default_error_code) {
     try
