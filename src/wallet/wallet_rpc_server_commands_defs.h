@@ -1186,5 +1186,25 @@ namespace wallet_rpc
       END_KV_SERIALIZE_MAP()
     };
   };
+
+  struct COMMAND_RPC_GET_TOTAL_BALANCE
+  {
+    struct request
+    {
+      BEGIN_KV_SERIALIZE_MAP()
+      END_KV_SERIALIZE_MAP()
+    };
+
+    struct response
+    {
+      uint64_t 	 balance;
+      uint64_t 	 unlocked_balance;
+
+      BEGIN_KV_SERIALIZE_MAP()
+        KV_SERIALIZE(balance)
+        KV_SERIALIZE(unlocked_balance)
+      END_KV_SERIALIZE_MAP()
+    };
+  };
 }
 }

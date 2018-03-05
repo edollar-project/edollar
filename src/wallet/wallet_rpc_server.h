@@ -110,6 +110,7 @@ namespace tools
         MAP_JON_RPC_WE("open_wallet",        on_open_wallet,        wallet_rpc::COMMAND_RPC_OPEN_WALLET)
         
         MAP_JON_RPC_WE("verify_address",     on_verify_address,      wallet_rpc::COMMAND_RPC_VERIFY_ADDRESS)
+        MAP_JON_RPC_WE("get_total_balance",  on_get_total_balance,         wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE)
       END_JSON_RPC_MAP()
     END_URI_MAP2()
 
@@ -156,7 +157,8 @@ namespace tools
       bool on_open_wallet(const wallet_rpc::COMMAND_RPC_OPEN_WALLET::request& req, wallet_rpc::COMMAND_RPC_OPEN_WALLET::response& res, epee::json_rpc::error& er);
 
       bool on_verify_address(const wallet_rpc::COMMAND_RPC_VERIFY_ADDRESS::request& req, wallet_rpc::COMMAND_RPC_VERIFY_ADDRESS::response& res, epee::json_rpc::error& er);
-
+      bool on_get_total_balance(const wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::response& res, epee::json_rpc::error& er);
+      
       //json rpc v2
       bool on_query_key(const wallet_rpc::COMMAND_RPC_QUERY_KEY::request& req, wallet_rpc::COMMAND_RPC_QUERY_KEY::response& res, epee::json_rpc::error& er);
 

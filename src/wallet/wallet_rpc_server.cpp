@@ -1650,7 +1650,22 @@ namespace tools
     res.valid = true;
     return true;
   } 
-
+  //------------------------------------------------------------------------------------------------------------------------------
+  bool wallet_rpc_server::on_get_total_balance(const wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::response& res, epee::json_rpc::error& er)
+  {
+    if (!m_wallet) return not_open(er);
+    try
+    {
+      res.balance = m_wallet->balance_all();
+      res.unlocked_balance = m_wallet->unlocked_balance_all();
+    }
+    catch (const std::exception& e)
+    {
+      handle_rpc_exception(std::current_exception(), er, WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR);
+      return false;
+    }
+    return true;
+  }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::handle_rpc_exception(const std::exception_ptr& e, epee::json_rpc::error& er, int default_error_code) {
     try
