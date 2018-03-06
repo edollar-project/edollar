@@ -93,8 +93,8 @@ using namespace cryptonote;
 
 #define SECOND_OUTPUT_RELATEDNESS_THRESHOLD 0.0f
 
-#define SUBADDRESS_LOOKAHEAD_MAJOR 50
-#define SUBADDRESS_LOOKAHEAD_MINOR 200
+#define SUBADDRESS_LOOKAHEAD_MAJOR 25000
+#define SUBADDRESS_LOOKAHEAD_MINOR 10
 
 #define KEY_IMAGE_EXPORT_FILE_MAGIC "Edollar key image export\002"
 
@@ -111,6 +111,9 @@ struct options
   const command_line::arg_descriptor<std::string> daemon_login = {"daemon-login", tools::wallet2::tr("Specify username[:password] for daemon RPC client"), "", true};
   const command_line::arg_descriptor<bool> testnet = {"testnet", tools::wallet2::tr("For testnet. Daemon must also be launched with --testnet flag"), false};
   const command_line::arg_descriptor<bool> restricted = {"restricted-rpc", tools::wallet2::tr("Restricts to view-only commands"), false};
+  const command_line::arg_descriptor<std::string> notify_transaction = {"notify-transaction", tools::wallet2::tr("Notify incoming confirmed transaction (tx added to block)"), ""};
+  const command_line::arg_descriptor<std::string> notify_pool_transaction = {"notify-pool-transaction", tools::wallet2::tr("Notify incoming mempool transaction (tx in mempool, wait to be mined)"), ""};
+  const command_line::arg_descriptor<std::string> notify_block = {"notify-block", tools::wallet2::tr("Notify block"), ""};
 };
 
 void do_prepare_file_names(const std::string &file_path, std::string &keys_file, std::string &wallet_file)
@@ -148,6 +151,10 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
   auto daemon_host = command_line::get_arg(vm, opts.daemon_host);
   auto daemon_port = command_line::get_arg(vm, opts.daemon_port);
 
+  std::string notify_block = command_line::get_arg(vm, opts.notify_block);
+  std::string notify_transaction = command_line::get_arg(vm, opts.notify_transaction);
+  std::string notify_pool_transaction = command_line::get_arg(vm, opts.notify_pool_transaction);
+
   if (!daemon_address.empty() && !daemon_host.empty() && 0 != daemon_port)
   {
     tools::fail_msg_writer() << tools::wallet2::tr("can't specify daemon host or port more than once");
@@ -178,6 +185,7 @@ std::unique_ptr<tools::wallet2> make_basic(const boost::program_options::variabl
 
   std::unique_ptr<tools::wallet2> wallet(new tools::wallet2(testnet, restricted));
   wallet->init(std::move(daemon_address), std::move(login));
+  wallet->setNotify(notify_block, notify_transaction, notify_pool_transaction);
   return wallet;
 }
 
@@ -459,6 +467,12 @@ std::string strjoin(const std::vector<size_t> &V, const char *sep)
   return ss.str();
 }
 
+void runCommand(const string& command) {
+  int err = ::system(command.c_str());
+  if (err)
+    std::cout<<"runCommand "<<command<< " failed err code "<<err<<std::endl;
+}
+
 } //namespace
 
 namespace tools
@@ -485,6 +499,9 @@ void wallet2::init_options(boost::program_options::options_description &desc_par
   command_line::add_arg(desc_params, opts.daemon_login);
   command_line::add_arg(desc_params, opts.testnet);
   command_line::add_arg(desc_params, opts.restricted);
+  command_line::add_arg(desc_params, opts.notify_block);
+  command_line::add_arg(desc_params, opts.notify_transaction);
+  command_line::add_arg(desc_params, opts.notify_pool_transaction);
 }
 
 boost::optional<password_container> wallet2::password_prompt(const bool new_password)
@@ -948,7 +965,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
     {
       //good news - got money! take care about it
       //usually we have only one transfer for user in transaction
-      LOG_PRINT_L0("Good new, we good money. num_vouts_received = " << num_vouts_received);
+      LOG_PRINT_L1("Good new, we good money. num_vouts_received = " << num_vouts_received);
       
       if (!pool)
       {
@@ -965,11 +982,9 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         THROW_WALLET_EXCEPTION_IF(kit != m_pub_keys.end() && kit->second >= m_transfers.size(),
                                   error::wallet_internal_error, std::string("Unexpected transfer index from public key: ") + "got " + (kit == m_pub_keys.end() ? "<none>" : boost::lexical_cast<std::string>(kit->second)) + ", m_transfers.size() is " + boost::lexical_cast<std::string>(m_transfers.size()));
         
-        LOG_PRINT_L0("Checking for output " << o << "th");
 
         if (kit == m_pub_keys.end())
         { 
-          LOG_PRINT_L0("kit == m_pub_keys.end()");
           if (!pool)
           {
             m_transfers.push_back(boost::value_initialized<transfer_details>());
@@ -1007,6 +1022,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
             if (0 != m_callback)
               m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index);
+            
+            wallet_notify_transaction(epee::string_tools::pod_to_hex(txid));
           }
         }
         else if (m_transfers[kit->second].m_spent || m_transfers[kit->second].amount() >= tx.vout[o].amount)
@@ -1058,6 +1075,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
             if (0 != m_callback)
               m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index);
+            
+            wallet_notify_transaction(epee::string_tools::pod_to_hex(txid));
           }
         }
       }
@@ -1145,6 +1164,8 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         m_unconfirmed_payments.emplace(txid, payment);
         if (0 != m_callback)
           m_callback->on_unconfirmed_money_received(height, txid, tx, payment.m_amount, payment.m_subaddr_index);
+        
+        wallet_notify_pool_transaction(epee::string_tools::pod_to_hex(txid));
       }
       else
       {
@@ -1241,6 +1262,8 @@ void wallet2::process_new_blockchain_entry(const cryptonote::block &b, const cry
 
   if (0 != m_callback)
     m_callback->on_new_block(height, b);
+  
+  wallet_notify_block(epee::string_tools::pod_to_hex(bl_id));
 }
 //----------------------------------------------------------------------------------------------------
 void wallet2::get_short_chain_history(std::list<crypto::hash> &ids) const
@@ -1950,6 +1973,8 @@ void wallet2::refresh(uint64_t start_height, uint64_t &blocks_fetched, bool &rec
   {
     LOG_PRINT_L1("Failed to check pending transactions");
   }
+
+  m_enable_notify = true;
 
   LOG_PRINT_L1("Refresh done, blocks received: " << blocks_fetched << ", balance (all accounts): " << print_money(balance_all()) << ", unlocked: " << print_money(unlocked_balance_all()));
 }
@@ -7049,6 +7074,30 @@ void wallet2::generate_genesis(cryptonote::block &b)
   {
     cryptonote::generate_genesis_block(b, config::GENESIS_TX, config::GENESIS_NONCE);
   }
+}
+//----------------------------------------------------------------------------------------------------
+void wallet2::wallet_notify_block(const string& block_hash) 
+{
+  if (m_notify_block.empty() || !m_enable_notify) return;
+  std::string command = m_notify_block + " " + block_hash;
+  //LOG_PRINT_L0("runCommand "<<command);
+  boost::thread t(runCommand, command); // thread runs free
+}
+//----------------------------------------------------------------------------------------------------
+void wallet2::wallet_notify_transaction(const string& txid)
+{
+  if (m_notify_transaction.empty() || !m_enable_notify) return;
+  std::string command = m_notify_transaction + " " + txid;
+  //LOG_PRINT_L0("runCommand "<<command);
+  boost::thread t(runCommand, command); // thread runs free
+}
+//----------------------------------------------------------------------------------------------------
+void wallet2::wallet_notify_pool_transaction(const string& txid)
+{
+  if (m_notify_pool_transaction.empty() || !m_enable_notify) return;
+  std::string command = m_notify_pool_transaction + " " + txid;
+  //LOG_PRINT_L0("runCommand "<<command);
+  boost::thread t(runCommand, command); // thread runs free
 }
 }
 
