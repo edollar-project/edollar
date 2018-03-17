@@ -411,15 +411,19 @@ namespace nodetool
     if (testnet)
     {
       full_addrs.insert("80.211.160.206:43030");
+      full_addrs.insert("159.65.159.89:43030");
     }
     else
     {
+      full_addrs.insert("80.211.162.91:33030");
+      full_addrs.insert("159.65.159.89:33030");
+      full_addrs.insert("80.211.14.160:33030");
       full_addrs.insert("207.148.69.20:33030");
       full_addrs.insert("80.211.160.206:33030");
-      full_addrs.insert("192.243.102.49:33030");
       full_addrs.insert("108.61.217.173:33030");
       full_addrs.insert("198.13.48.167:33030");
-      full_addrs.insert("192.243.102.173:33030");
+      full_addrs.insert("192.243.102.49:33030");
+      //full_addrs.insert("192.243.102.173:33030");
     }
     return full_addrs;
   }
