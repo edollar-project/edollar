@@ -246,6 +246,11 @@ namespace tools
     entry.note = m_wallet->get_tx_note(pd.m_tx_hash);
     entry.type = "in";
     entry.subaddr_index = pd.m_subaddr_index;
+    //add more info: destination [{address, amount}]
+    entry.destinations.push_back(wallet_rpc::transfer_destination());
+    wallet_rpc::transfer_destination &td = entry.destinations.back();
+    td.amount = pd.m_amount;
+    td.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_index.major, pd.m_subaddr_index.minor});
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const crypto::hash &txid, const tools::wallet2::confirmed_transfer_details &pd)
@@ -267,7 +272,14 @@ namespace tools
     }
 
     entry.type = "out";
-    entry.subaddr_index = { pd.m_subaddr_account, 0 };
+    //add transfer source
+    for (const auto &index : pd.m_subaddr_indices) {
+      entry.sources.push_back(wallet_rpc::transfer_source());
+      wallet_rpc::transfer_source &ts = entry.sources.back();
+      ts.subaddr_account = pd.m_subaddr_account;
+      ts.subaddr_index = index;
+      ts.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_account, index});
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const crypto::hash &txid, const tools::wallet2::unconfirmed_transfer_details &pd)
@@ -281,7 +293,21 @@ namespace tools
     entry.unlock_time = pd.m_tx.unlock_time;
     entry.note = m_wallet->get_tx_note(txid);
     entry.type = is_failed ? "failed" : "pending";
-    entry.subaddr_index = { pd.m_subaddr_account, 0 };
+    //add destination detail
+    for (const auto &d: pd.m_dests) {
+      entry.destinations.push_back(wallet_rpc::transfer_destination());
+      wallet_rpc::transfer_destination &td = entry.destinations.back();
+      td.amount = d.amount;
+      td.address = get_account_address_as_str(m_wallet->testnet(), d.is_subaddress, d.addr);
+    }
+    //add transfer source
+    for (const auto &index : pd.m_subaddr_indices) {
+      entry.sources.push_back(wallet_rpc::transfer_source());
+      wallet_rpc::transfer_source &ts = entry.sources.back();
+      ts.subaddr_account = pd.m_subaddr_account;
+      ts.subaddr_index = index;
+      ts.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_account, index});
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const tools::wallet2::payment_details &pd)
@@ -295,6 +321,11 @@ namespace tools
     entry.note = m_wallet->get_tx_note(pd.m_tx_hash);
     entry.type = "pool";
     entry.subaddr_index = pd.m_subaddr_index;
+    //add more info: destination [{address, amount}]
+    entry.destinations.push_back(wallet_rpc::transfer_destination());
+    wallet_rpc::transfer_destination &td = entry.destinations.back();
+    td.amount = pd.m_amount;
+    td.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_index.major, pd.m_subaddr_index.minor});
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response& res, epee::json_rpc::error& er)

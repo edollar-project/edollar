@@ -278,6 +278,19 @@ namespace wallet_rpc
     END_KV_SERIALIZE_MAP()
   };
 
+  struct transfer_source
+  {
+    uint32_t subaddr_account;
+    uint32_t subaddr_index;
+    std::string address;
+    
+    BEGIN_KV_SERIALIZE_MAP()
+      KV_SERIALIZE(subaddr_account)
+      KV_SERIALIZE(subaddr_index)
+      KV_SERIALIZE(address)
+    END_KV_SERIALIZE_MAP()
+  };
+
   struct COMMAND_RPC_TRANSFER
   {
     struct request
@@ -736,6 +749,7 @@ namespace wallet_rpc
     std::string type;
     uint64_t unlock_time;
     cryptonote::subaddress_index subaddr_index;
+    std::list<transfer_source> sources;
 
     BEGIN_KV_SERIALIZE_MAP()
       KV_SERIALIZE(txid);
@@ -748,6 +762,7 @@ namespace wallet_rpc
       KV_SERIALIZE(type);
       KV_SERIALIZE(unlock_time)
       KV_SERIALIZE(subaddr_index);
+      KV_SERIALIZE(sources);
     END_KV_SERIALIZE_MAP()
   };
 
