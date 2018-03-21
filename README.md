@@ -71,6 +71,8 @@ library archives (`.a`).
 | OpenSSL        | basically any | NO       | `libssl-dev`       | `openssl`      | NO       | sha256 sum     |
 | libzmq         | 3.0.0         | NO       | `libzmq3-dev`      | `zeromq`       | NO       | ZeroMQ library |
 | libunbound     | 1.4.16        | YES      | `libunbound-dev`   | `unbound`      | NO       | DNS resolver   |
+| libsodium      | any           | YES      | `libsodium-dev`    | `libsodium`    | NO       | NetComm, Crypto|
+| libpgm	 | any		 | YES	    | `libpgm-dev`	 | `libpgm`	  | NO	     | General M-Cast |
 | libminiupnpc   | 2.0           | YES      | `libminiupnpc-dev` | `miniupnpc`    | YES      | NAT punching   |
 | libunwind      | any           | NO       | `libunwind8-dev`   | `libunwind`    | YES      | Stack traces   |
 | liblzma        | any           | NO       | `liblzma-dev`      | `xz`           | YES      | For libunwind  |
@@ -80,6 +82,7 @@ library archives (`.a`).
 | GTest          | 1.5           | YES      | `libgtest-dev`^    | `gtest`        | YES      | Test suite     |
 | Doxygen        | any           | NO       | `doxygen`          | `doxygen`      | YES      | Documentation  |
 | Graphviz       | any           | NO       | `graphviz`         | `graphviz`     | YES      | Documentation  |
+
 
 [^] On Debian/Ubuntu `libgtest-dev` only includes sources and headers. You must
 build the library binary manually. This can be done with the following command ```sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/ ```
@@ -92,6 +95,8 @@ invokes cmake commands as needed.
 #### On Linux and OS X
 
 * Install the dependencies
+	```sudo apt-get install -y build-essential cmake pkg-config libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libpgm-dev libminiupnpc-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev libgtest-dev doxygen graphviz```
+
 * Change to the root of the source code directory and build:
 
         cd edollar
