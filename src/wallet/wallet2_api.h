@@ -36,6 +36,7 @@
 #include <set>
 #include <ctime>
 #include <iostream>
+#include <map>
 
 //  Public interface for libwallet library
 namespace Edollar {
@@ -609,6 +610,24 @@ struct Wallet
                                                    PendingTransaction::Priority = PendingTransaction::Priority_Low,
                                                    uint32_t subaddr_account = 0,
                                                    std::set<uint32_t> subaddr_indices = {}) = 0;
+    
+    /*!
+     * \brief createTransactionMany creates transaction to many destination address
+     * \param dst_addr          destination address as std::map
+     * \param mixin_count       mixin count. if 0 passed, wallet will use default value
+     * \param subaddr_account   subaddress account from which the input funds are taken
+     * \param subaddr_indices   set of subaddress indices to use for transfer or sweeping. if set empty, all are chosen when sweeping, and one or more are automatically chosen when transferring. after execution, returns the set of actually used indices
+     * \param priority
+     * \return                  PendingTransaction object. caller is responsible to check PendingTransaction::status()
+     *                          after object returned
+     */
+
+    virtual PendingTransaction * createTransactionMany(const std::map<std::string, uint64_t> & dest, 
+                                                   uint32_t mixin_count,
+                                                   PendingTransaction::Priority = PendingTransaction::Priority_Low,
+                                                   uint32_t subaddr_account = 0,
+                                                   std::set<uint32_t> subaddr_indices = {}) = 0;
+
 
     /*!
      * \brief createSweepUnmixableTransaction creates transaction with unmixable outputs.
