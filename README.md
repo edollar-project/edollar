@@ -286,6 +286,22 @@ The default Solaris linker can't be used, you have to install GNU ld, then run c
 
 Then you can run make as usual.
 
+### Build Docker image:
+
+        # change to the root of source code directory and build image
+        docker build -t edollar .
+
+        # run container in foreground
+        docker run -ti --name myedollar -v /edollar/blockchain:/root/.edollar -v /edollar/wallet:/root/.edollar-wallet edollar
+
+        # or run in background
+        docker run -ti -d --name myedollar -v /edollar/blockchain:/root/.edollar -v /edollar/wallet:/root/.edollar-wallet edollar
+
+        # to create new wallet connect to running container
+        docker exec -ti myedollar /bin/bash
+        cd /root/.edollar-wallet
+        edollar-wallet-cli
+
 ### Building portable statically linked binaries
 
 By default, in either dynamically or statically linked builds, binaries target the specific host processor on which the build happens and are not portable to other processors. Portable binaries can be built using the following targets:

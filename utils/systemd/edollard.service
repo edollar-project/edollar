@@ -1,5 +1,5 @@
 [Unit]
-Description=Monero Full Node
+Description=Edollar Full Node
 After=network.target
 
 [Service]
