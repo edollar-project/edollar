@@ -1,22 +1,22 @@
 // Copyright (c) 2017-2018, The EDollar Project
 // Copyright (c) 2014-2017, The Monero Project
-// 
+//
 // All rights reserved.
-// 
+//
 // Redistribution and use in source and binary forms, with or without modification, are
 // permitted provided that the following conditions are met:
-// 
+//
 // 1. Redistributions of source code must retain the above copyright notice, this list of
 //    conditions and the following disclaimer.
-// 
+//
 // 2. Redistributions in binary form must reproduce the above copyright notice, this list
 //    of conditions and the following disclaimer in the documentation and/or other
 //    materials provided with the distribution.
-// 
+//
 // 3. Neither the name of the copyright holder nor the names of its contributors may be
 //    used to endorse or promote products derived from this software without specific
 //    prior written permission.
-// 
+//
 // THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
 // EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
 // MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL
@@ -26,7 +26,7 @@
 // INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 // STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF
 // THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-// 
+//
 // Parts of this file are originally copyright (c) 2012-2013 The Cryptonote developers
 #include <boost/format.hpp>
 #include <boost/asio/ip/address.hpp>
@@ -59,7 +59,7 @@ namespace
   const command_line::arg_descriptor<bool> arg_disable_rpc_login = {"disable-rpc-login", "Disable HTTP authentication for RPC connections served by this process"};
   const command_line::arg_descriptor<bool> arg_trusted_daemon = {"trusted-daemon", "Enable commands which rely on a trusted daemon", false};
   const command_line::arg_descriptor<std::string> arg_wallet_dir = {"wallet-dir", "Directory for newly created wallets"};
-  
+
   constexpr const char default_rpc_username[] = "edollar";
 }
 
@@ -246,6 +246,11 @@ namespace tools
     entry.note = m_wallet->get_tx_note(pd.m_tx_hash);
     entry.type = "in";
     entry.subaddr_index = pd.m_subaddr_index;
+    //add more info: destination [{address, amount}]
+    entry.destinations.push_back(wallet_rpc::transfer_destination());
+    wallet_rpc::transfer_destination &td = entry.destinations.back();
+    td.amount = pd.m_amount;
+    td.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_index.major, pd.m_subaddr_index.minor});
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const crypto::hash &txid, const tools::wallet2::confirmed_transfer_details &pd)
@@ -267,7 +272,14 @@ namespace tools
     }
 
     entry.type = "out";
-    entry.subaddr_index = { pd.m_subaddr_account, 0 };
+    //add transfer source
+    for (const auto &index : pd.m_subaddr_indices) {
+      entry.sources.push_back(wallet_rpc::transfer_source());
+      wallet_rpc::transfer_source &ts = entry.sources.back();
+      ts.subaddr_account = pd.m_subaddr_account;
+      ts.subaddr_index = index;
+      ts.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_account, index});
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const crypto::hash &txid, const tools::wallet2::unconfirmed_transfer_details &pd)
@@ -281,7 +293,21 @@ namespace tools
     entry.unlock_time = pd.m_tx.unlock_time;
     entry.note = m_wallet->get_tx_note(txid);
     entry.type = is_failed ? "failed" : "pending";
-    entry.subaddr_index = { pd.m_subaddr_account, 0 };
+    //add destination detail
+    for (const auto &d: pd.m_dests) {
+      entry.destinations.push_back(wallet_rpc::transfer_destination());
+      wallet_rpc::transfer_destination &td = entry.destinations.back();
+      td.amount = d.amount;
+      td.address = get_account_address_as_str(m_wallet->testnet(), d.is_subaddress, d.addr);
+    }
+    //add transfer source
+    for (const auto &index : pd.m_subaddr_indices) {
+      entry.sources.push_back(wallet_rpc::transfer_source());
+      wallet_rpc::transfer_source &ts = entry.sources.back();
+      ts.subaddr_account = pd.m_subaddr_account;
+      ts.subaddr_index = index;
+      ts.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_account, index});
+    }
   }
   //------------------------------------------------------------------------------------------------------------------------------
   void wallet_rpc_server::fill_transfer_entry(tools::wallet_rpc::transfer_entry &entry, const tools::wallet2::payment_details &pd)
@@ -295,6 +321,11 @@ namespace tools
     entry.note = m_wallet->get_tx_note(pd.m_tx_hash);
     entry.type = "pool";
     entry.subaddr_index = pd.m_subaddr_index;
+    //add more info: destination [{address, amount}]
+    entry.destinations.push_back(wallet_rpc::transfer_destination());
+    wallet_rpc::transfer_destination &td = entry.destinations.back();
+    td.amount = pd.m_amount;
+    td.address = m_wallet->get_subaddress_as_str({pd.m_subaddr_index.major, pd.m_subaddr_index.minor});
   }
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_getbalance(const wallet_rpc::COMMAND_RPC_GET_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_BALANCE::response& res, epee::json_rpc::error& er)
@@ -1367,7 +1398,7 @@ namespace tools
         er.message = std::string("WALLET_RPC_ERROR_CODE_WRONG_ADDRESS: ") + req.address;
       return false;
     }
-    
+
     if (!m_wallet->add_address_book_row(info.address, req.description, info.is_subaddress))
     {
       er.code = WALLET_RPC_ERROR_CODE_UNKNOWN_ERROR;
@@ -1444,7 +1475,7 @@ namespace tools
       return false;
     }
 
-    cryptonote::COMMAND_RPC_START_MINING::request daemon_req = AUTO_VAL_INIT(daemon_req); 
+    cryptonote::COMMAND_RPC_START_MINING::request daemon_req = AUTO_VAL_INIT(daemon_req);
     daemon_req.miner_address = m_wallet->get_account().get_public_address_str(m_wallet->testnet());
     daemon_req.threads_count        = req.threads_count;
     daemon_req.do_background_mining = req.do_background_mining;
@@ -1649,7 +1680,7 @@ namespace tools
     }
     res.valid = true;
     return true;
-  } 
+  }
   //------------------------------------------------------------------------------------------------------------------------------
   bool wallet_rpc_server::on_get_total_balance(const wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::request& req, wallet_rpc::COMMAND_RPC_GET_TOTAL_BALANCE::response& res, epee::json_rpc::error& er)
   {
