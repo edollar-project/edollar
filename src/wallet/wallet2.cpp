@@ -93,8 +93,8 @@ using namespace cryptonote;
 
 #define SECOND_OUTPUT_RELATEDNESS_THRESHOLD 0.0f
 
-#define SUBADDRESS_LOOKAHEAD_MAJOR 50
-#define SUBADDRESS_LOOKAHEAD_MINOR 200
+#define SUBADDRESS_LOOKAHEAD_MAJOR 2
+#define SUBADDRESS_LOOKAHEAD_MINOR 50000
 
 #define KEY_IMAGE_EXPORT_FILE_MAGIC "Edollar key image export\002"
 
@@ -966,7 +966,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
       //good news - got money! take care about it
       //usually we have only one transfer for user in transaction
       LOG_PRINT_L1("Good new, we good money. num_vouts_received = " << num_vouts_received);
-      
+
       if (!pool)
       {
         THROW_WALLET_EXCEPTION_IF(tx.vout.size() != o_indices.size(), error::wallet_internal_error,
@@ -981,10 +981,10 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         auto kit = m_pub_keys.find(tx_scan_info[o].in_ephemeral.pub);
         THROW_WALLET_EXCEPTION_IF(kit != m_pub_keys.end() && kit->second >= m_transfers.size(),
                                   error::wallet_internal_error, std::string("Unexpected transfer index from public key: ") + "got " + (kit == m_pub_keys.end() ? "<none>" : boost::lexical_cast<std::string>(kit->second)) + ", m_transfers.size() is " + boost::lexical_cast<std::string>(m_transfers.size()));
-        
+
 
         if (kit == m_pub_keys.end())
-        { 
+        {
           if (!pool)
           {
             m_transfers.push_back(boost::value_initialized<transfer_details>());
@@ -1022,7 +1022,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
             if (0 != m_callback)
               m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index);
-            
+
             wallet_notify_transaction(epee::string_tools::pod_to_hex(txid));
           }
         }
@@ -1075,7 +1075,7 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
             LOG_PRINT_L0("Received money: " << print_money(td.amount()) << ", with tx: " << txid);
             if (0 != m_callback)
               m_callback->on_money_received(height, txid, tx, td.m_amount, td.m_subaddr_index);
-            
+
             wallet_notify_transaction(epee::string_tools::pod_to_hex(txid));
           }
         }
@@ -1164,13 +1164,13 @@ void wallet2::process_new_transaction(const crypto::hash &txid, const cryptonote
         m_unconfirmed_payments.emplace(txid, payment);
         if (0 != m_callback)
           m_callback->on_unconfirmed_money_received(height, txid, tx, payment.m_amount, payment.m_subaddr_index);
-        
+
         wallet_notify_pool_transaction(epee::string_tools::pod_to_hex(txid));
       }
       else
       {
         m_payments.emplace(txid, payment);
-      }  
+      }
       LOG_PRINT_L2("Payment found in " << (pool ? "pool" : "block") << ": "  <<  payment.m_tx_hash << " / " << payment.m_amount);
     }
   }
@@ -1262,7 +1262,7 @@ void wallet2::process_new_blockchain_entry(const cryptonote::block &b, const cry
 
   if (0 != m_callback)
     m_callback->on_new_block(height, b);
-  
+
   wallet_notify_block(epee::string_tools::pod_to_hex(bl_id));
 }
 //----------------------------------------------------------------------------------------------------
@@ -4269,22 +4269,22 @@ void wallet2::get_outs(std::vector<std::vector<tools::wallet2::get_outs_entry>> 
       // as it has different data than the dummy data it had sent earlier
       bool real_out_found = false;
       LOG_PRINT_L0(" The requested_outputs_count = " << requested_outputs_count);
-      
+
       for (size_t n = 0; n < requested_outputs_count; ++n)
       {
         size_t i = base + n;
         if (req.outputs[i].index == td.m_global_output_index)
         {
-          if (daemon_resp.outs[i].key == boost::get<txout_to_key>(td.m_tx.vout[td.m_internal_output_index].target).key) 
+          if (daemon_resp.outs[i].key == boost::get<txout_to_key>(td.m_tx.vout[td.m_internal_output_index].target).key)
           {
-            if (daemon_resp.outs[i].mask == mask) 
+            if (daemon_resp.outs[i].mask == mask)
             {
               real_out_found = true;
             }
-              
+
           }
         }
-              
+
       }
       THROW_WALLET_EXCEPTION_IF(!real_out_found, error::wallet_internal_error,
                                 "Daemon response did not include the requested real output");
@@ -5062,7 +5062,7 @@ void wallet2::light_wallet_get_address_txs()
     // Do not add tx if empty.
     if (total_sent == 0 && total_received == 0)
       continue;
-      
+
     crypto::hash tx_hash;
 
     THROW_WALLET_EXCEPTION_IF(string_tools::validate_hex(64, t.hash), error::wallet_internal_error, "Invalid hash field");
@@ -7076,7 +7076,7 @@ void wallet2::generate_genesis(cryptonote::block &b)
   }
 }
 //----------------------------------------------------------------------------------------------------
-void wallet2::wallet_notify_block(const string& block_hash) 
+void wallet2::wallet_notify_block(const string& block_hash)
 {
   if (m_notify_block.empty() || !m_enable_notify) return;
   std::string command = m_notify_block + " " + block_hash;
@@ -7100,4 +7100,3 @@ void wallet2::wallet_notify_pool_transaction(const string& txid)
   boost::thread t(runCommand, command); // thread runs free
 }
 }
-
