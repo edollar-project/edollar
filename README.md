@@ -79,13 +79,15 @@ library archives (`.a`).
 | libreadline    | 6.3.0         | NO       | `libreadline6-dev` | `readline`     | YES      | Input editing  |
 | ldns           | 1.6.17        | NO       | `libldns-dev`      | `ldns`         | YES      | SSL toolkit    |
 | expat          | 1.1           | NO       | `libexpat1-dev`    | `expat`        | YES      | XML parsing    |
-| GTest          | 1.5           | YES      | `libgtest-dev`^    | `gtest`        | YES      | Test suite     |
+| GTest          | 1.5           | YES      | `libgtest-dev`[1]  | `gtest`        | YES      | Test suite     |
 | Doxygen        | any           | NO       | `doxygen`          | `doxygen`      | YES      | Documentation  |
 | Graphviz       | any           | NO       | `graphviz`         | `graphviz`     | YES      | Documentation  |
+| libnorm [2]    | any           | NO       | `libnorm-dev`      |                | YES      | For ZeroMQ     | 
 
 
-[^] On Debian/Ubuntu `libgtest-dev` only includes sources and headers. You must
+[1] On Debian/Ubuntu `libgtest-dev` only includes sources and headers. You must
 build the library binary manually. This can be done with the following command ```sudo apt-get install libgtest-dev && cd /usr/src/gtest && sudo cmake . && sudo make && sudo mv libg* /usr/lib/ ```
+[2] libnorm-dev is needed if your zmq library was built with libnorm, and not needed otherwise
 
 ### Build instructions
 
@@ -95,7 +97,7 @@ invokes cmake commands as needed.
 #### On Linux and OS X
 
 * Install the dependencies
-	```sudo apt-get install -y build-essential cmake pkg-config libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libpgm-dev libminiupnpc-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev libgtest-dev doxygen graphviz```
+	```sudo apt-get install -y build-essential cmake pkg-config libboost-all-dev libssl-dev libzmq3-dev libunbound-dev libsodium-dev libpgm-dev libminiupnpc-dev libunwind8-dev liblzma-dev libreadline6-dev libldns-dev libexpat1-dev libgtest-dev doxygen graphviz libnorm-dev```
 
 * Change to the root of the source code directory and build:
 
